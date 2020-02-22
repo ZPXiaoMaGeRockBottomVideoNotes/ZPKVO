@@ -7,10 +7,12 @@
 //
 
 /**
-KVO的实现原理：
-1、在给这个person实例对象添加KVO监听之后，系统会利用Runtime机制动态地创建一个ZPPerson类的子类，名字就叫做"NSKVONotifying_ZPPerson"。然后系统会把这个person实例对象里面的isa指针由原来的指向ZPPerson类的class对象变为现在的指向NSKVONotifying_ZPPerson类的class对象；
-2、新创建的子类"NSKVONotifying_ZPPerson"的class对象里面存储着isa指针、superclass指针、"setAge:"实例方法、"class"实例方法、"dealloc"实例方法以及"_isKVOA"实例方法等。其中系统会重写"setAge:"实例方法，重写后的该方法与它父类中的该方法实现是不一样的，只不过方法的名称是一样的而已；
-3、添加完KVO监听之后，当开发者调用"setAge:"实例方法来修改person对象的age属性的时候，根据上面所述，这个instance对象里面的isa指针已经由原来的指向ZPPerson类的class对象变为了现在的指向NSKVONotifying_ZPPerson类的class对象了，所以系统根据这个instance对象里面的isa指针找到的是NSKVONotifying_ZPPerson类的class对象，然后在这个class对象里面找到重写后的"setAge:"实例方法，最后再进行调用。这个重写的"setAge:"实例方法里面会调用Foundation框架里面的C语言函数"_NSSetIntValueAndNotify();"，这个函数的实现里面首先会执行"[self willChangeValueForKey:@"age"];"代码，然后再执行"[super setAge:age];"代码，在执行这句代码的时候就会执行它的父类，也就是ZPPerson类里面的"setAge:"方法，从而真正更改这个属性的值，最后再执行"[self didChangeValueForKey:@"age"];"代码。"didChangeValueForKey:"这个方法里面会通知监听器"age"属性的值被改变了，即调用"- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context"监听方法，从而实现了对对象的某个属性进行监听的目的。
+ KVO的概念：KVO的全称是Key-Value Observing，俗称“键值监听”，可以用于监听某个对象属性值的改变。
+
+ KVO的实现原理：
+ 1、在给这个person实例对象添加KVO监听之后，系统会利用Runtime机制动态地创建一个ZPPerson类的子类，名字就叫做"NSKVONotifying_ZPPerson"。然后系统会把这个person实例对象里面的isa指针由原来的指向ZPPerson类的class对象变为现在的指向NSKVONotifying_ZPPerson类的class对象；
+ 2、新创建的子类"NSKVONotifying_ZPPerson"的class对象里面存储着isa指针、superclass指针、"setAge:"实例方法、"class"实例方法、"dealloc"实例方法以及"_isKVOA"实例方法等。其中系统会重写"setAge:"实例方法，重写后的该方法与它父类中的该方法实现是不一样的，只不过方法的名称是一样的而已；
+ 3、添加完KVO监听之后，当开发者调用"setAge:"实例方法来修改person对象的age属性的时候，根据上面所述，这个instance对象里面的isa指针已经由原来的指向ZPPerson类的class对象变为了现在的指向NSKVONotifying_ZPPerson类的class对象了，所以系统根据这个instance对象里面的isa指针找到的是NSKVONotifying_ZPPerson类的class对象，然后在这个class对象里面找到重写后的"setAge:"实例方法，最后再进行调用。这个重写的"setAge:"实例方法里面会调用Foundation框架里面的C语言函数"_NSSetIntValueAndNotify();"，这个函数的实现里面首先会执行"[self willChangeValueForKey:@"age"];"代码，然后再执行"[super setAge:age];"代码，在执行这句代码的时候就会执行它的父类，也就是ZPPerson类里面的"setAge:"方法，从而真正更改这个属性的值，最后再执行"[self didChangeValueForKey:@"age"];"代码。"didChangeValueForKey:"这个方法里面会通知监听器"age"属性的值被改变了，即调用"- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context"监听方法，从而实现了对对象的某个属性进行监听的目的。
 */
 #import "ViewController.h"
 #import "ZPPerson.h"
